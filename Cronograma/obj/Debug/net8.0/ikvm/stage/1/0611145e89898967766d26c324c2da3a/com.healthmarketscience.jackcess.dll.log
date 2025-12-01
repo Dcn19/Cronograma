@@ -1,0 +1,7 @@
+trace IKVM-0001: Executing C:\Users\Danilo\.nuget\packages\ikvm.msbuild.tools.runtime.win-x64\8.11.2\ikvmc\net8.0\win-x64\ikvmc.exe @C:\Users\Danilo\source\repos\Cronograma\Cronograma\obj\Debug\net8.0\ikvm\stage\1\0611145e89898967766d26c324c2da3a\com.healthmarketscience.jackcess.dll.rsp
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.DirectoryEntry" not found.
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.DocumentEntry" not found.
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.POIFSFileSystem" not found.
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.DocumentInputStream" not found.
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.DirectoryNode" not found.
+warning IKVM0100: Class "org.apache.poi.poifs.filesystem.Entry" not found.

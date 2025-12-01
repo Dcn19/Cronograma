@@ -1,0 +1,7 @@
+trace IKVM-0001: Executing C:\Users\Danilo\.nuget\packages\ikvm.msbuild.tools.runtime.win-x64\8.11.2\ikvmc\net8.0\win-x64\ikvmc.exe @C:\Users\Danilo\source\repos\Cronograma\Cronograma\obj\Debug\net8.0\ikvm\stage\1\2628448fe8922950ee1dec539163872a\sqlite.jdbc.dll.rsp
+warning IKVM0101: Unable to compile class "META-INF.versions.9.org.sqlite.nativeimage.SqliteJdbcFeature$SqliteJdbcFeatureException". (class format error "53.0")
+warning IKVM0101: Unable to compile class "META-INF.versions.9.org.sqlite.nativeimage.SqliteJdbcFeature$1". (class format error "53.0")
+warning IKVM0101: Unable to compile class "META-INF.versions.9.org.sqlite.nativeimage.SqliteJdbcFeature". (class format error "53.0")
+warning IKVM0101: Unable to compile class "META-INF.versions.9.module-info". (class format error "53.0")
+warning IKVM0100: Class "org.slf4j.LoggerFactory" not found.
+warning IKVM0100: Class "org.slf4j.Logger" not found.
