@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Cronograma")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1038b63eb682c3603faae6b5b28fd583f5f6b7c3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Cronograma")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Cronograma")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

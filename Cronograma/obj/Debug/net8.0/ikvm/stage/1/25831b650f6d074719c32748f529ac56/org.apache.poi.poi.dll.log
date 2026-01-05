@@ -1,2 +1,0 @@
-trace IKVM-0001: Executing C:\Users\Danilo\.nuget\packages\ikvm.msbuild.tools.runtime.win-x64\8.11.2\ikvmc\net8.0\win-x64\ikvmc.exe @C:\Users\Danilo\source\repos\Cronograma\Cronograma\obj\Debug\net8.0\ikvm\stage\1\25831b650f6d074719c32748f529ac56\org.apache.poi.poi.dll.rsp
-warning IKVM0101: Unable to compile class "META-INF.versions.9.module-info". (class format error "53.0")

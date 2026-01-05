@@ -1,0 +1,3 @@
+wwwroot\relatorio\index.html
+wwwroot\relatorio\logo_branco.png
+wwwroot\relatorio\welcome_logo-051acc73.png

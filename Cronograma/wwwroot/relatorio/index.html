@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Controle Semanal de Atividades - Controltech Automação</title>
+
+  <style>
+    * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }
+
+    body { background: #f3f3f3; margin: 0; padding: 20px; }
+
+    .container {
+      max-width: 1000px; margin: 0 auto; background: #ffffff;
+      padding: 20px 30px; border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.08);
+    }
+
+    .header {
+      position: relative;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+
+      /* ✅ reserva a faixa do painel direito pra não sobrepor */
+      padding-right: 340px;
+
+      /* ✅ garante altura suficiente pro painel direito (evita invadir a parte de baixo) */
+      min-height: 320px;
+    }
+
+    /* ✅ bloco central fica centralizado na ÁREA LIVRE (sem o painel direito) */
+    .header-center {
+      position: absolute;
+      left: calc((100% - 340px) / 2);
+      top: 8px;
+      transform: translateX(-50%);
+
+      width: min(520px, calc(100% - 340px));
+      max-width: 520px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .header-center * { pointer-events: auto; }
+
+    .brand-logo { width: 100%; display: flex; justify-content: center; }
+    .brand-logo img {
+      height: 112px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-text { width: 100%; }
+
+    .header-center h1 {
+      font-size: 28px;
+      margin: 0 0 6px 0;
+      line-height: 1.12;
+      color: #111;
+    }
+
+    .header-center p {
+      margin: 3px 0;
+      font-size: 15px;
+      color: #555;
+    }
+
+    /* ✅ painel direito TRAVADO no canto direito */
+    .header-right {
+      position: absolute;
+      top: 0;
+      right: 0;
+
+      font-size: 13px;
+      width: 320px;
+      z-index: 2;
+    }
+    .header-right .field-group { margin-bottom: 6px; }
+
+    .field-label { font-weight: bold; display: block; margin-bottom: 2px; }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%; padding: 5px 7px; font-size: 13px;
+      border-radius: 4px; border: 1px solid #ccc;
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    .info {
+      margin-bottom: 15px; font-size: 13px;
+      display: grid; grid-template-columns: 1.5fr 1.5fr;
+      gap: 10px 20px;
+    }
+
+    .info-full { grid-column: 1 / -1; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      margin-top: 10px; font-size: 13px;
+    }
+
+    th, td { border: 1px solid #ddd; padding: 6px 8px; vertical-align: top; }
+    th { background: #f5f5f5; text-align: left; }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    .btn-row {
+      margin-top: 10px; display: flex; justify-content: flex-end;
+      gap: 10px; flex-wrap: wrap;
+    }
+
+    button {
+      padding: 6px 12px; border-radius: 4px; border: none;
+      cursor: pointer; font-size: 13px;
+    }
+
+    .btn-add { background: #007bff; color: #ffffff; }
+    .btn-add:hover { opacity: 0.9; }
+
+    .btn-remove { background: #dc3545; color: #ffffff; }
+    .btn-remove:hover { opacity: 0.9; }
+
+    .btn-pdf { background: #28a745; color: #ffffff; }
+    .btn-pdf:hover { opacity: 0.9; }
+
+    .btn-remove-small {
+      background: #dc3545; color: #fff; border: none;
+      padding: 4px 8px; font-size: 12px;
+      border-radius: 4px; cursor: pointer;
+    }
+    .btn-remove-small:hover { opacity: 0.9; }
+
+    .obs { margin-top: 15px; font-size: 13px; }
+
+    .status-bar {
+      margin-top: 10px; font-size: 12px; color: #555;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+
+    .status-pill {
+      padding: 4px 8px; border-radius: 999px; font-size: 12px;
+      border: 1px solid #ddd; background: #fafafa;
+    }
+
+    .status-pill.ok { border-color: #28a74533; background: #28a74511; color: #1f7a33; }
+    .status-pill.err { border-color: #dc354533; background: #dc354511; color: #b02a37; }
+    .status-pill.lock { border-color: #0f172a22; background: #0f172a10; color: #0f172a; font-weight: 800; }
+
+    .finalizar-wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid #e5e7eb; background: #fafafa;
+      margin-top: 10px;
+    }
+
+    .finalizar-left { display: flex; flex-direction: column; gap: 2px; }
+    .finalizar-title { font-weight: 800; font-size: 13px; color: #111; }
+    .finalizar-sub { font-size: 12px; color: #6b7280; }
+
+    .switch { position: relative; width: 44px; height: 24px; flex: 0 0 auto; }
+    .switch input { display: none; }
+    .slider {
+      position: absolute; inset: 0;
+      background: #d1d5db; border-radius: 999px;
+      transition: 160ms;
+      cursor: pointer;
+    }
+    .slider:before {
+      content: "";
+      position: absolute; height: 18px; width: 18px;
+      left: 3px; top: 3px;
+      background: #fff; border-radius: 999px;
+      transition: 160ms;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .switch input:checked + .slider { background: #111827; }
+    .switch input:checked + .slider:before { transform: translateX(20px); }
+
+    .locked-overlay-hint {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #0f172a08;
+      border: 1px solid #0f172a14;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+    }
+    .locked-overlay-hint.show { display: block; }
+
+    /* =========================
+       PRINT HELPERS (tela)
+       ========================= */
+
+    /* por padrão NÃO aparece na tela */
+    .print-value { display: none; }
+
+    /* textarea/input que vai ser "trocado" no print */
+    .print-hide-input { display: block; }
+
+    /* =========================
+       IMPRESSÃO / PDF (A4) - CORPORATIVO (SEM SOBREPOR CONTEÚDO)
+       ========================= */
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    /* por padrão, fora do print */
+    #print_header,
+    #print_footer,
+    .print-section-title {
+      display: none;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .container {
+        max-width: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* ✅ NÃO mostrar "Finalizar relatório" no PDF */
+      #finalizar_wrap { display: none !important; }
+
+      /* ✅ esconde botões/controles */
+      .btn-row,
+      #btnAdd,
+      #btnClear,
+      #btnPdf,
+      .btn-remove-small,
+      th:last-child,
+      td:last-child,
+      .slider,
+      .switch {
+        display: none !important;
+      }
+
+      /* ✅ NÃO mostrar status bar no PDF */
+      .status-bar,
+      .status-only-print {
+        display: none !important;
+      }
+
+      /* ✅ esconder blocos vazios no PDF */
+      .print-hidden { display: none !important; }
+
+      /* ✅ remove hint de bloqueio no PDF */
+      #locked_hint { display: none !important; }
+
+      /* =========================================================
+         ✅ HEADER CORPORATIVO (SEM FIXED) -> NÃO SOBREPOE CONTEÚDO
+         ========================================================= */
+
+      #print_header {
+        display: grid !important;
+        grid-template-columns: 1fr auto !important;
+        align-items: center !important;
+
+        background: #0f172a !important;
+        border-radius: 6px !important;
+
+        min-height: 44px !important;
+        padding: 10px 12px !important;
+
+        /* ✅ desce a faixa e controla distância pros campos */
+        margin-top: 10mm !important;
+        margin-bottom: 8mm !important;
+
+        color: #fff !important;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.15) !important;
+      }
+
+      #print_header .ph-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        min-width: 0 !important;
+      }
+
+      #print_header .ph-brand {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        min-width: 0 !important;
+      }
+
+      #print_header .ph-logo {
+        height: 26px !important;
+        width: auto !important;
+        display: block !important;
+        object-fit: contain !important;
+        flex: 0 0 auto !important;
+      }
+
+      #print_header .ph-left-text {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+      }
+
+      #print_header .ph-company {
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.8px !important;
+        opacity: 0.9 !important;
+        line-height: 1.1 !important;
+      }
+
+      #print_header .ph-title {
+        font-size: 13px !important;
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+      }
+
+      #print_header .ph-right {
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        opacity: 0.9 !important;
+        white-space: nowrap !important;
+      }
+
+      /* ✅ footer desligado */
+      #print_footer { display: none !important; }
+
+      /* =========================
+         MAIS ESPAÇAMENTO NO PDF (pedido)
+         ========================= */
+      .header {
+        border-bottom: 1px solid #0f172a !important;
+        padding: 0 0 14px 0 !important;
+        margin: 0 0 18px 0 !important; /* ✅ + respiro */
+        min-height: auto !important;
+        padding-right: 0 !important;
+      }
+
+      /* ✅ no PDF: remove logo + título/descrição (fica só a faixa preta criada por JS) */
+      .header-center {
+        display: none !important;
+      }
+
+      .header-right {
+        position: static !important;
+        width: 100% !important;
+        z-index: auto !important;
+
+        margin-top: 10px !important;
+
+        display: grid !important;
+        grid-template-columns: 2fr 1fr 1fr !important;
+        gap: 10px 14px !important;
+      }
+
+      .header-right .field-group:nth-child(1) { order: 2 !important; }
+      .header-right .field-group:nth-child(2) { order: 3 !important; }
+      .header-right .field-group:nth-child(3) { order: 1 !important; }
+      .header-right .field-group:nth-child(4) { order: 4 !important; }
+      .header-right .field-group:nth-child(5) { order: 5 !important; }
+
+      .header-right .field-group:nth-child(5) { grid-column: 2 / 4 !important; }
+
+      .field-label {
+        font-size: 10px !important;
+        color: #475569 !important;
+        margin-bottom: 2px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.7px !important;
+        font-weight: 900 !important;
+      }
+
+      /* sem cara de input no PDF */
+      input[type="text"],
+      input[type="date"],
+      input[type="number"],
+      select {
+        border: 0 !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        border-radius: 0 !important;
+        padding: 3px 0 !important;
+        font-size: 12px !important;
+        background: transparent !important;
+        color: #0f172a !important;
+      }
+
+      select {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background-image: none !important;
+      }
+
+      /* =========================
+         ✅ Seções corporativas (com linha divisória igual ao cabeçalho)
+         ✅ + mais espaçamento entre os tópicos
+         ========================= */
+      .print-section-title {
+        display: block !important;
+
+        /* ✅ + espaço entre seções */
+        margin: 22px 0 14px 0 !important;
+
+        /* ✅ “linha divisória” igual a do cabeçalho */
+        border-top: 1px solid #0f172a !important;
+
+        /* ✅ distância da linha até o título */
+        padding: 10px 12px 8px 12px !important;
+
+        /* mantém estética do card do título */
+        border-right: 1px solid #e2e8f0 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        border-left: 4px solid #0f172a !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+
+        font-size: 11px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.8px !important;
+        text-transform: uppercase !important;
+      }
+
+      /* ✅ respiro depois da seção de info */
+      .info {
+        margin: 0 0 22px 0 !important; /* ✅ + espaçamento */
+        gap: 10px 14px !important;
+        font-size: 12px !important;
+      }
+
+      /* ✅ respiro depois da tabela (antes da próxima seção) */
+      #tabela-atividades {
+        margin-top: 0 !important;     /* título já dá o “topo” */
+        margin-bottom: 22px !important; /* ✅ + espaçamento */
+      }
+
+      /* ✅ respiro pra observações (o título já vem antes) */
+      #wrap_observacoes {
+        margin-top: 0 !important;
+      }
+
+      /* =========================
+         ✅ SEM SCROLL NO PDF (TEXTAREAS)
+         ========================= */
+      .print-hide-input { display: none !important; }
+
+      .print-value {
+        display: block !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+
+        border: 1px solid #e2e8f0 !important;
+        border-left: 4px solid #0f172a !important;
+        border-radius: 10px !important;
+
+        padding: 10px 12px !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+
+        line-height: 1.4 !important;
+        font-size: 12px !important;
+      }
+
+      #resumo_semana + .print-value,
+      #observacoes + .print-value {
+        min-height: 58px !important;
+      }
+
+      /* =========================
+         TABELA -> CARDS (SÓ NO PDF)
+         ========================= */
+      #tabela-atividades thead { display: none !important; }
+
+      #tabela-atividades,
+      #tabela-atividades tbody,
+      #tabela-atividades tr,
+      #tabela-atividades td {
+        border: 0 !important;
+      }
+
+      #tabela-atividades {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+      }
+
+      #tabela-atividades tbody tr {
+        display: grid !important;
+        grid-template-columns: 1.1fr 1fr 0.6fr 1fr !important;
+        grid-template-areas:
+          "data periodo horas status"
+          "atividade atividade atividade atividade" !important;
+
+        gap: 10px 12px !important;
+        padding: 12px !important;
+
+        /* ✅ MAIS ESPAÇO ENTRE OS CARDS */
+        margin: 0 0 16px 0 !important;
+
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        background: #fff !important;
+
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      #tabela-atividades tbody tr td {
+        padding: 0 !important;
+        background: transparent !important;
+      }
+
+      #tabela-atividades tbody tr td:nth-child(1) { grid-area: data !important; }
+      #tabela-atividades tbody tr td:nth-child(2) { grid-area: periodo !important; }
+      #tabela-atividades tbody tr td:nth-child(3) { grid-area: atividade !important; }
+      #tabela-atividades tbody tr td:nth-child(4) { grid-area: horas !important; }
+      #tabela-atividades tbody tr td:nth-child(5) { grid-area: status !important; }
+
+      #tabela-atividades tbody tr td:nth-child(1)::before,
+      #tabela-atividades tbody tr td:nth-child(2)::before,
+      #tabela-atividades tbody tr td:nth-child(3)::before,
+      #tabela-atividades tbody tr td:nth-child(4)::before,
+      #tabela-atividades tbody tr td:nth-child(5)::before {
+        display: block !important;
+        font-size: 9.5px !important;
+        font-weight: 900 !important;
+        color: #475569 !important;
+        margin: 0 0 3px 0 !important;
+        letter-spacing: 0.7px !important;
+        text-transform: uppercase !important;
+      }
+
+      #tabela-atividades tbody tr td:nth-child(1)::before { content: "Data"; }
+      #tabela-atividades tbody tr td:nth-child(2)::before { content: "Período"; }
+      #tabela-atividades tbody tr td:nth-child(4)::before { content: "Horas"; }
+      #tabela-atividades tbody tr td:nth-child(5)::before { content: "Status"; }
+      #tabela-atividades tbody tr td:nth-child(3)::before { content: "Atividade"; }
+
+      #tabela-atividades tbody tr td:nth-child(3) .print-value {
+        min-height: 40px !important;
+        padding: 10px 12px !important;
+        border-radius: 10px !important;
+        font-size: 12px !important;
+      }
+
+      #tabela-atividades tbody tr td:nth-child(4) input[type="number"] {
+        text-align: center !important;
+      }
+
+      textarea { resize: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-center">
+        <div class="brand-logo">
+          <img src="welcome_logo-051acc73.png" alt="Controltech Automação" />
+        </div>
+
+        <div class="brand-text">
+          <h1>Controle Semanal de Atividades</h1>
+          <p><strong>Controltech Automação</strong></p>
+          <p>Relatório para acompanhamento de colaboradores</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="field-group">
+          <label class="field-label">Semana (início):</label>
+          <input type="date" id="semana_inicio" name="relatorio_semana_inicio" autocomplete="off">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Semana (fim):</label>
+          <input type="date" id="semana_fim" name="relatorio_semana_fim" autocomplete="off">
+        </div>
+
+        <div class="field-group" id="wrap_colaborador">
+          <label class="field-label">Colaborador:</label>
+          <input
+            type="text"
+            id="colaborador"
+            name="relatorio_colaborador"
+            autocomplete="new-password"
+            placeholder="Nome do colaborador"
+          >
+        </div>
+
+        <div class="field-group" id="wrap_setor">
+          <label class="field-label">Setor / Área:</label>
+          <input
+            type="text"
+            id="setor"
+            name="relatorio_setor"
+            list="dl_setor"
+            autocomplete="new-password"
+            placeholder="Ex.: Engenharia, Montagem, Campo"
+          >
+          <datalist id="dl_setor"></datalist>
+        </div>
+
+        <div class="field-group" id="wrap_supervisor">
+          <label class="field-label">Supervisor responsável:</label>
+          <input
+            type="text"
+            id="supervisor"
+            name="relatorio_supervisor"
+            list="dl_supervisor"
+            autocomplete="new-password"
+            placeholder="Responsável pela Demanda"
+          >
+          <datalist id="dl_supervisor"></datalist>
+        </div>
+
+        <div class="finalizar-wrap" id="finalizar_wrap">
+          <div class="finalizar-left">
+            <div class="finalizar-title">Finalizar relatório</div>
+            <div class="finalizar-sub">Nenhuma alteração será permitida.</div>
+          </div>
+
+          <label class="switch" title="Finalizar relatório">
+            <input type="checkbox" id="finalizado_chk" name="relatorio_finalizado" autocomplete="off" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="info" id="wrap_info">
+      <div id="wrap_projeto">
+        <label class="field-label">Projeto / Cliente principal da semana:</label>
+        <input
+          type="text"
+          id="projeto"
+          name="relatorio_projeto"
+          list="dl_projeto"
+          autocomplete="new-password"
+          placeholder="Ex.: Planta de extração de óleo - Cliente X"
+        >
+        <datalist id="dl_projeto"></datalist>
+      </div>
+
+      <div id="wrap_local">
+        <label class="field-label">Local de atuação:</label>
+        <input
+          type="text"
+          id="local"
+          name="relatorio_local"
+          list="dl_local"
+          autocomplete="new-password"
+          placeholder="Ex.: Escritório, Campo, Cliente"
+        >
+        <datalist id="dl_local"></datalist>
+      </div>
+
+      <div class="info-full" id="wrap_resumo">
+        <label class="field-label">Resumo geral da semana:</label>
+        <textarea
+          id="resumo_semana"
+          name="relatorio_resumo_semana"
+          autocomplete="off"
+          placeholder="Descrição breve das principais entregas e atividades da semana."
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="locked-overlay-hint" id="locked_hint">
+      🔒 Relatório finalizado. Edição desabilitada.
+    </div>
+
+    <table id="tabela-atividades">
+      <thead>
+        <tr>
+          <th style="width: 10%;">Data</th>
+          <th style="width: 17%;">Período</th>
+          <th style="width: 41%;">Atividade realizada</th>
+          <th style="width: 10%;">Horas</th>
+          <th style="width: 19%;">Status</th>
+          <th style="width: 5%;">Remover</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-atividades"></tbody>
+    </table>
+
+    <div class="btn-row">
+      <button type="button" class="btn-add" id="btnAdd" onclick="adicionarLinha()">Adicionar linha</button>
+      <button type="button" class="btn-remove" id="btnClear" onclick="limparFormulario()">Limpar formulário</button>
+      <button type="button" class="btn-pdf" id="btnPdf" onclick="exportarPDF()">Exportar para PDF</button>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-pill" id="pillId">ID: -</span>
+      <span class="status-pill" id="pillSave">Salvamento: -</span>
+      <span class="status-pill" id="pillLoad">Carregamento: -</span>
+      <span class="status-pill" id="pillLock">Status: RASCUNHO</span>
+    </div>
+
+    <div class="obs" id="wrap_observacoes">
+      <label class="field-label">Observações adicionais / Pendências para próxima semana:</label>
+      <textarea
+        id="observacoes"
+        name="relatorio_observacoes"
+        autocomplete="off"
+        placeholder="Registre aqui pendências, riscos, necessidades de suporte, etc."
+      ></textarea>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = "";
+  let RELATORIO_ID = null;
+
+  let _debounceTimer = null;
+  let _loading = false;
+
+  let RELATORIO_FINALIZADO = false;
+
+  const RELATORIOS_SYNC_MESSAGE_TYPE = "RELATORIOS_TREE_REFRESH";
+  const RELATORIOS_SYNC_CHANNEL = "relatorios_sync_v1";
+
+  const _printRestoreNodes = [];
+  const _printTextNodes = []; // [{ el, div }]
+
+  // =========================
+  //  AUTOCOMPLETE (SUGESTÕES)
+  // =========================
+  const _sugCache = new Map(); // key -> { at:number, items:string[] }
+  const _sugDebounce = {
+    colaborador: null,
+    setor: null,
+    supervisor: null,
+    projeto: null,
+    local: null
+  };
+
+  let _lastColaboradorForSug = "";
+
+  function getColaboradorAtual() {
+    const el = document.getElementById("colaborador");
+    return ((el && el.value) ? el.value : "").trim();
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function setDatalist(datalistId, items) {
+    const dl = document.getElementById(datalistId);
+    if (!dl) return;
+    const safe = Array.isArray(items) ? items : [];
+    dl.innerHTML = safe
+      .filter(x => typeof x === "string" && x.trim().length > 0)
+      .slice(0, 50)
+      .map(v => `<option value="${escapeHtml(v)}"></option>`)
+      .join("");
+  }
+
+  async function apiSugestoes(campo, q) {
+    const colaborador = getColaboradorAtual();
+    if (!colaborador) return { itens: [], fonte: "recent" };
+
+    const key = `${campo}|${colaborador}|${(q || "").trim().toLowerCase()}`;
+    const now = Date.now();
+
+    const cached = _sugCache.get(key);
+    if (cached && (now - cached.at) < 60000) {
+      return { itens: cached.items, fonte: cached.fonte || "recent" };
+    }
+
+    const params = new URLSearchParams();
+    params.set("colaborador", colaborador);
+    params.set("campo", campo);
+    params.set("limit", "20");
+    if (q && String(q).trim()) params.set("q", String(q).trim());
+
+    const res = await fetch(`${API_BASE}/api/relatorios/sugestoes?${params.toString()}`);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Sugestões: erro (${res.status}). ${txt}`);
+    }
+
+    const data = await res.json();
+    const itens = Array.isArray(data.itens) ? data.itens : [];
+    const fonte = data.fonte || "recent";
+
+    _sugCache.set(key, { at: now, items: itens, fonte });
+    return { itens, fonte };
+  }
+
+  function debounceSug(campo, fn, ms = 250) {
+    if (_sugDebounce[campo]) clearTimeout(_sugDebounce[campo]);
+    _sugDebounce[campo] = setTimeout(fn, ms);
+  }
+
+  function hardenAgainstChromeAutofill() {
+    const ids = ["colaborador", "setor", "supervisor", "projeto", "local", "resumo_semana", "observacoes"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      el.setAttribute("autocomplete", el.tagName === "TEXTAREA" ? "off" : "new-password");
+
+      if ((el.value || "").trim().length > 0) {
+        const q = parseQuery();
+        if (!q.id) el.value = "";
+      }
+    });
+  }
+
+  function setupDatalistPreload(inputEl, campo, datalistId) {
+    if (!inputEl) return;
+
+    const preload = async () => {
+      if (RELATORIO_FINALIZADO) return;
+
+      const colaborador = getColaboradorAtual();
+      if (!colaborador) return;
+
+      try {
+        const r = await apiSugestoes(campo, null);
+        setDatalist(datalistId, r.itens);
+      } catch {}
+    };
+
+    inputEl.addEventListener("pointerdown", () => {
+      preload();
+    }, { passive: true });
+
+    inputEl.addEventListener("keydown", (ev) => {
+      const k = ev.key || "";
+      if (k === "ArrowDown" || k === "ArrowUp") preload();
+    });
+  }
+
+  function setupAutocomplete() {
+    const setorEl = document.getElementById("setor");
+    const supervisorEl = document.getElementById("supervisor");
+    const projetoEl = document.getElementById("projeto");
+    const localEl = document.getElementById("local");
+
+    setupDatalistPreload(setorEl, "setor", "dl_setor");
+    setupDatalistPreload(supervisorEl, "supervisor", "dl_supervisor");
+    setupDatalistPreload(projetoEl, "projeto", "dl_projeto");
+    setupDatalistPreload(localEl, "local", "dl_local");
+
+    if (setorEl) {
+      setorEl.addEventListener("focus", () => {
+        if (RELATORIO_FINALIZADO) return;
+        debounceSug("setor", async () => {
+          try {
+            const r = await apiSugestoes("setor", null);
+            setDatalist("dl_setor", r.itens);
+          } catch {}
+        }, 10);
+      });
+
+      setorEl.addEventListener("input", () => {
+        if (RELATORIO_FINALIZADO) return;
+        const q = setorEl.value || "";
+        debounceSug("setor", async () => {
+          try {
+            const r = await apiSugestoes("setor", q);
+            setDatalist("dl_setor", r.itens);
+          } catch {}
+        }, 220);
+      });
+    }
+
+    if (supervisorEl) {
+      supervisorEl.addEventListener("focus", () => {
+        if (RELATORIO_FINALIZADO) return;
+        debounceSug("supervisor", async () => {
+          try {
+            const r = await apiSugestoes("supervisor", null);
+            setDatalist("dl_supervisor", r.itens);
+          } catch {}
+        }, 10);
+      });
+
+      supervisorEl.addEventListener("input", () => {
+        if (RELATORIO_FINALIZADO) return;
+        const q = supervisorEl.value || "";
+        debounceSug("supervisor", async () => {
+          try {
+            const r = await apiSugestoes("supervisor", q);
+            setDatalist("dl_supervisor", r.itens);
+          } catch {}
+        }, 220);
+      });
+    }
+
+    if (projetoEl) {
+      projetoEl.addEventListener("focus", () => {
+        if (RELATORIO_FINALIZADO) return;
+        debounceSug("projeto", async () => {
+          try {
+            const r = await apiSugestoes("projeto", null);
+            setDatalist("dl_projeto", r.itens);
+          } catch {}
+        }, 10);
+      });
+
+      projetoEl.addEventListener("input", () => {
+        if (RELATORIO_FINALIZADO) return;
+        const q = projetoEl.value || "";
+        debounceSug("projeto", async () => {
+          try {
+            const r = await apiSugestoes("projeto", q);
+            setDatalist("dl_projeto", r.itens);
+          } catch {}
+        }, 220);
+      });
+    }
+
+    if (localEl) {
+      localEl.addEventListener("focus", () => {
+        if (RELATORIO_FINALIZADO) return;
+        debounceSug("local", async () => {
+          try {
+            const r = await apiSugestoes("local", null);
+            setDatalist("dl_local", r.itens);
+          } catch {}
+        }, 10);
+      });
+
+      localEl.addEventListener("input", () => {
+        if (RELATORIO_FINALIZADO) return;
+        const q = localEl.value || "";
+        debounceSug("local", async () => {
+          try {
+            const r = await apiSugestoes("local", q);
+            setDatalist("dl_local", r.itens);
+          } catch {}
+        }, 220);
+      });
+    }
+
+    const colaboradorEl = document.getElementById("colaborador");
+    if (colaboradorEl) {
+      colaboradorEl.addEventListener("input", () => {
+        if (RELATORIO_FINALIZADO) return;
+
+        debounceSug("colaborador", async () => {
+          const colab = getColaboradorAtual();
+          if (!colab) return;
+
+          if (colab !== _lastColaboradorForSug) {
+            _sugCache.clear();
+            _lastColaboradorForSug = colab;
+          }
+
+          warmupSugestoes();
+        }, 350);
+      });
+
+      colaboradorEl.addEventListener("change", () => {
+        if (RELATORIO_FINALIZADO) return;
+
+        const colab = getColaboradorAtual();
+        if (colab !== _lastColaboradorForSug) {
+          _sugCache.clear();
+          _lastColaboradorForSug = colab;
+        }
+
+        debounceSug("setor", async () => {
+          try { setDatalist("dl_setor", (await apiSugestoes("setor", null)).itens); } catch {}
+        }, 80);
+
+        debounceSug("supervisor", async () => {
+          try { setDatalist("dl_supervisor", (await apiSugestoes("supervisor", null)).itens); } catch {}
+        }, 100);
+
+        debounceSug("projeto", async () => {
+          try { setDatalist("dl_projeto", (await apiSugestoes("projeto", null)).itens); } catch {}
+        }, 120);
+
+        debounceSug("local", async () => {
+          try { setDatalist("dl_local", (await apiSugestoes("local", null)).itens); } catch {}
+        }, 140);
+      });
+    }
+  }
+
+  function notifySidebarRefresh() {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: RELATORIOS_SYNC_MESSAGE_TYPE }, "*");
+      }
+    } catch {}
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const bc = new BroadcastChannel(RELATORIOS_SYNC_CHANNEL);
+        bc.postMessage({ type: RELATORIOS_SYNC_MESSAGE_TYPE });
+        bc.close();
+      }
+    } catch {}
+  }
+
+  function setPill(elId, text, kind = "") {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.classList.remove("ok", "err", "lock");
+    if (kind) el.classList.add(kind);
+    el.textContent = text;
+  }
+
+  function parseQuery() {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      id: p.get("id"),
+      title: p.get("title"),
+      ref: p.get("ref")
+    };
+  }
+
+  function isoDateOnly(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function getMonday(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function isValidIsoDate(iso) {
+    if (!iso || typeof iso !== "string") return false;
+    const d = new Date(`${iso}T00:00:00`);
+    return !Number.isNaN(d.getTime());
+  }
+
+  function setSemanaFimFromInicio() {
+    const inicio = document.getElementById("semana_inicio").value;
+    if (!inicio) return;
+    const d = new Date(inicio + "T00:00:00");
+    const fim = new Date(d.getTime() + 6 * 86400000);
+    document.getElementById("semana_fim").value = isoDateOnly(fim);
+  }
+
+  function clearPrintHidden() {
+    const nodes = document.querySelectorAll(".print-hidden");
+    nodes.forEach(n => n.classList.remove("print-hidden"));
+  }
+
+  function setPrintHiddenByValue(wrapperId, inputId) {
+    const wrap = document.getElementById(wrapperId);
+    const input = document.getElementById(inputId);
+    if (!wrap || !input) return false;
+    const v = (input.value || "").trim();
+    const hide = v.length === 0;
+    wrap.classList.toggle("print-hidden", hide);
+    return hide;
+  }
+
+  function updatePrintVisibility() {
+    clearPrintHidden();
+
+    const hiddenProjeto = setPrintHiddenByValue("wrap_projeto", "projeto");
+    const hiddenLocal  = setPrintHiddenByValue("wrap_local", "local");
+    const hiddenResumo = setPrintHiddenByValue("wrap_resumo", "resumo_semana");
+
+    const infoWrap = document.getElementById("wrap_info");
+    if (infoWrap) {
+      const allHidden = hiddenProjeto && hiddenLocal && hiddenResumo;
+      infoWrap.classList.toggle("print-hidden", allHidden);
+    }
+
+    const obsWrap = document.getElementById("wrap_observacoes");
+    const obsEl = document.getElementById("observacoes");
+    if (obsWrap && obsEl) {
+      const hideObs = (obsEl.value || "").trim().length === 0;
+      obsWrap.classList.toggle("print-hidden", hideObs);
+    }
+
+    setPrintHiddenByValue("wrap_setor", "setor");
+    setPrintHiddenByValue("wrap_supervisor", "supervisor");
+  }
+
+  function restorePrintTweaks() {
+    while (_printRestoreNodes.length) {
+      const opt = _printRestoreNodes.pop();
+      if (!opt) continue;
+      const orig = opt.dataset._origText;
+      if (orig !== undefined) {
+        opt.textContent = orig;
+        delete opt.dataset._origText;
+      }
+    }
+  }
+
+  function prepareBlankSelectTextForPrint() {
+    restorePrintTweaks();
+
+    const selects = document.querySelectorAll(
+      '#tabela-atividades select[name="periodo"], #tabela-atividades select[name="status"]'
+    );
+
+    selects.forEach((sel) => {
+      const val = (sel.value || "").trim();
+      const opt0 = sel.options && sel.options.length ? sel.options[0] : null;
+      if (!opt0) return;
+
+      if (val === "") {
+        if (opt0.dataset._origText === undefined) opt0.dataset._origText = opt0.textContent;
+        opt0.textContent = "";
+        _printRestoreNodes.push(opt0);
+      }
+    });
+  }
+
+  function restorePrintTextBlocks() {
+    while (_printTextNodes.length) {
+      const item = _printTextNodes.pop();
+      if (!item) continue;
+      try {
+        if (item.el) item.el.classList.remove("print-hide-input");
+        if (item.div && item.div.parentNode) item.div.parentNode.removeChild(item.div);
+      } catch {}
+    }
+  }
+
+  function preparePrintTextBlocks() {
+    restorePrintTextBlocks();
+
+    const textareas = document.querySelectorAll("textarea");
+    textareas.forEach((ta) => {
+      const v = (ta.value || "").trim();
+      const wrap = ta.closest(".print-hidden");
+      if (wrap) return;
+
+      const div = document.createElement("div");
+      div.className = "print-value";
+      div.textContent = v.length ? ta.value : "";
+
+      ta.insertAdjacentElement("afterend", div);
+      ta.classList.add("print-hide-input");
+
+      _printTextNodes.push({ el: ta, div });
+    });
+  }
+
+  async function apiCriar(colaborador, semanaInicioYYYYMMDD, dataReferenciaYYYYMMDD) {
+    const res = await fetch(`${API_BASE}/api/relatorios/criar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        colaborador,
+        semana: `${semanaInicioYYYYMMDD}T00:00:00`,
+        dataReferencia: `${(dataReferenciaYYYYMMDD || semanaInicioYYYYMMDD)}T00:00:00`
+      })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Falha ao criar (${res.status}). ${txt}`);
+    }
+    return await res.json();
+  }
+
+  async function apiGetById(id) {
+    const res = await fetch(`${API_BASE}/api/relatorios/${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error(`Falha ao carregar (${res.status}).`);
+    return await res.json();
+  }
+
+  async function apiPutById(id, dados) {
+    const res = await fetch(`${API_BASE}/api/relatorios/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dados })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Falha ao salvar (${res.status}). ${txt}`);
+    }
+    return await res.json();
+  }
+
+  function limparTabela() {
+    document.getElementById("tbody-atividades").innerHTML = "";
+  }
+
+  function criarLinha(item = null) {
+    const tbody = document.getElementById("tbody-atividades");
+    const tr = document.createElement("tr");
+    tr.className = "linha-atividade";
+
+    tr.innerHTML = `
+      <td><input type="date" name="data" autocomplete="off"></td>
+      <td>
+        <select name="periodo" autocomplete="off">
+          <option value="">Selecione</option>
+          <option>Manhã</option>
+          <option>Tarde</option>
+          <option>Integral</option>
+        </select>
+      </td>
+      <td>
+        <textarea maxlength="100" name="atividade" autocomplete="off" placeholder="Descreva a atividade realizada. Até 100 caracteres"></textarea>
+      </td>
+      <td>
+        <input type="number" name="horas" autocomplete="off" step="0.5" min="0" max="10" placeholder="" oninput="limitarHoras(this)">
+      </td>
+      <td>
+        <select name="status" autocomplete="off">
+          <option value="">Selecione</option>
+          <option>Pausado</option>
+          <option>Andamento</option>
+          <option>Concluído</option>
+          <option>Pendente</option>
+          <option>Cancelado</option>
+        </select>
+      </td>
+      <td style="text-align:center;">
+        <button type="button" class="btn-remove-small" onclick="removerLinhaEspecifica(this)">X</button>
+      </td>
+    `;
+
+    if (item) {
+      const data = item.data ? String(item.data).slice(0,10) : "";
+      tr.querySelector('input[name="data"]').value = data;
+      tr.querySelector('select[name="periodo"]').value = item.periodo || "";
+      tr.querySelector('textarea[name="atividade"]').value = item.atividade || "";
+
+      tr.querySelector('input[name="horas"]').value =
+        (item.horas === null || item.horas === undefined) ? "" : String(item.horas);
+
+      tr.querySelector('select[name="status"]').value = item.status || "";
+    }
+
+    tbody.appendChild(tr);
+  }
+
+  function lerItensDaTabela() {
+    const linhas = document.querySelectorAll("#tbody-atividades .linha-atividade");
+    const itens = [];
+
+    linhas.forEach(tr => {
+      const data = tr.querySelector('input[name="data"]').value || null;
+      const periodo = tr.querySelector('select[name="periodo"]').value || "";
+      const atividade = tr.querySelector('textarea[name="atividade"]').value || "";
+      const horasRaw = tr.querySelector('input[name="horas"]').value;
+      const status = tr.querySelector('select[name="status"]').value || "";
+
+      itens.push({
+        data: data ? `${data}T00:00:00` : null,
+        periodo,
+        atividade,
+        horas: horasRaw === "" ? null : Number(horasRaw),
+        status
+      });
+    });
+
+    return itens;
+  }
+
+  function applyFinalizadoUI() {
+    const hint = document.getElementById("locked_hint");
+    const chk = document.getElementById("finalizado_chk");
+    const wrap = document.getElementById("finalizar_wrap");
+
+    const btnAdd = document.getElementById("btnAdd");
+    const btnClear = document.getElementById("btnClear");
+    const btnPdf = document.getElementById("btnPdf");
+
+    if (chk) chk.checked = !!RELATORIO_FINALIZADO;
+
+    const selectors = [
+      "input",
+      "select",
+      "textarea",
+      ".btn-remove-small",
+      "#btnAdd",
+      "#btnClear",
+    ];
+
+    for (const sel of selectors) {
+      const nodes = document.querySelectorAll(sel);
+      nodes.forEach((el) => {
+        if (el === btnPdf) return;
+
+        if (el === chk) {
+          el.disabled = !!RELATORIO_FINALIZADO;
+          return;
+        }
+
+        if (el.tagName === "BUTTON") {
+          el.disabled = !!RELATORIO_FINALIZADO;
+          return;
+        }
+
+        el.disabled = !!RELATORIO_FINALIZADO;
+        el.readOnly = !!RELATORIO_FINALIZADO;
+      });
+    }
+
+    if (hint) {
+      if (RELATORIO_FINALIZADO) hint.classList.add("show");
+      else hint.classList.remove("show");
+    }
+
+    if (RELATORIO_FINALIZADO) {
+      setPill("pillLock", "Status: FINALIZADO", "lock");
+      setPill("pillSave", "Salvamento: bloqueado (finalizado)", "lock");
+    } else {
+      setPill("pillLock", "Status: RASCUNHO", "");
+    }
+
+    if (RELATORIO_FINALIZADO && _debounceTimer) {
+      clearTimeout(_debounceTimer);
+      _debounceTimer = null;
+    }
+
+    if (wrap) {
+      wrap.style.opacity = RELATORIO_FINALIZADO ? "0.85" : "1";
+    }
+  }
+
+  function preencherForm(payload) {
+    const dados = payload.dados || {};
+    const q = parseQuery();
+
+    if (q.title && q.title.trim()) {
+      document.title = q.title.trim();
+    }
+
+    document.getElementById("semana_inicio").value = dados.semanaInicio ? String(dados.semanaInicio).slice(0,10) : "";
+    document.getElementById("semana_fim").value = dados.semanaFim ? String(dados.semanaFim).slice(0,10) : "";
+
+    document.getElementById("colaborador").value = dados.colaborador || payload.colaborador || "";
+    document.getElementById("setor").value = dados.setor || "";
+    document.getElementById("supervisor").value = dados.supervisor || "";
+
+    document.getElementById("projeto").value = dados.projeto || "";
+    document.getElementById("local").value = dados.local || "";
+
+    document.getElementById("resumo_semana").value = dados.resumoSemana || "";
+    document.getElementById("observacoes").value = dados.observacoes || "";
+
+    RELATORIO_FINALIZADO = !!dados.finalizado;
+
+    _lastColaboradorForSug = getColaboradorAtual();
+
+    limparTabela();
+
+    const dataRef =
+      (dados.dataReferencia ? String(dados.dataReferencia).slice(0,10) : "") ||
+      (q.ref ? String(q.ref).slice(0,10) : "");
+
+    const itens = Array.isArray(dados.itens) ? dados.itens : [];
+
+    if (itens.length === 0) {
+      criarLinha({
+        data: dataRef ? `${dataRef}T00:00:00` : (dados.semanaInicio ? `${String(dados.semanaInicio).slice(0,10)}T00:00:00` : null),
+        periodo: "",
+        atividade: "",
+        horas: null,
+        status: ""
+      });
+
+      applyFinalizadoUI();
+      if (RELATORIO_FINALIZADO) notifySidebarRefresh();
+
+      warmupSugestoes();
+      return;
+    }
+
+    itens.forEach((i, idx) => {
+      if (idx === 0 && (!i.data || String(i.data).slice(0,10) === "0001-01-01") && dataRef) {
+        criarLinha({ ...i, data: `${dataRef}T00:00:00` });
+      } else {
+        criarLinha(i);
+      }
+    });
+
+    applyFinalizadoUI();
+    if (RELATORIO_FINALIZADO) notifySidebarRefresh();
+
+    warmupSugestoes();
+  }
+
+  function montarDadosParaSalvar() {
+    const semanaInicio = document.getElementById("semana_inicio").value || null;
+    const semanaFim = document.getElementById("semana_fim").value || null;
+
+    return {
+      semanaInicio: semanaInicio ? `${semanaInicio}T00:00:00` : null,
+      semanaFim: semanaFim ? `${semanaFim}T00:00:00` : null,
+
+      dataReferencia: (() => {
+        const first = document.querySelector('#tbody-atividades .linha-atividade input[name="data"]');
+        const v = first ? first.value : "";
+        return v ? `${v}T00:00:00` : (semanaInicio ? `${semanaInicio}T00:00:00` : null);
+      })(),
+
+      titulo: "",
+
+      colaborador: (document.getElementById("colaborador").value || "").trim(),
+      setor: document.getElementById("setor").value || "",
+      supervisor: document.getElementById("supervisor").value || "",
+
+      projeto: document.getElementById("projeto").value || "",
+      local: document.getElementById("local").value || "",
+
+      resumoSemana: document.getElementById("resumo_semana").value || "",
+      observacoes: document.getElementById("observacoes").value || "",
+
+      itens: lerItensDaTabela(),
+
+      finalizado: !!RELATORIO_FINALIZADO
+    };
+  }
+
+  async function carregarPorId(id) {
+    try {
+      _loading = true;
+      setPill("pillLoad", "Carregamento: carregando...", "");
+      const payload = await apiGetById(id);
+      preencherForm(payload);
+
+      setPill("pillId", `ID: ${id}`, "ok");
+      if (payload.atualizadoEm) setPill("pillLoad", `Carregamento: ok (${payload.atualizadoEm})`, "ok");
+      else setPill("pillLoad", "Carregamento: ok", "ok");
+
+      if (!RELATORIO_FINALIZADO) setPill("pillSave", "Salvamento: aguardando alterações...", "");
+    } catch (e) {
+      setPill("pillLoad", `Carregamento: erro (${e.message || "falha"})`, "err");
+    } finally {
+      _loading = false;
+    }
+  }
+
+  async function garantirIdSeNaoTiver() {
+    if (RELATORIO_ID) return RELATORIO_ID;
+
+    const colaborador = (document.getElementById("colaborador").value || "").trim();
+    const semanaInicio = (document.getElementById("semana_inicio").value || "").trim();
+
+    const firstDateEl = document.querySelector('#tbody-atividades .linha-atividade input[name="data"]');
+    const dataRef = (firstDateEl && firstDateEl.value) ? firstDateEl.value : semanaInicio;
+
+    if (!colaborador || !semanaInicio) {
+      throw new Error("Preencha Colaborador e Semana (início) para criar o relatório.");
+    }
+
+    setPill("pillSave", "Salvamento: criando relatório...", "");
+    const created = await apiCriar(colaborador, semanaInicio, dataRef);
+
+    RELATORIO_ID = created.id;
+    setPill("pillId", `ID: ${RELATORIO_ID}`, "ok");
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("id", RELATORIO_ID);
+    window.history.replaceState({}, "", url.toString());
+
+    warmupSugestoes();
+
+    return RELATORIO_ID;
+  }
+
+  async function salvarAgora() {
+    if (_loading) return;
+    if (RELATORIO_FINALIZADO) return;
+
+    try {
+      const id = await garantirIdSeNaoTiver();
+      const dados = montarDadosParaSalvar();
+
+      setPill("pillSave", "Salvamento: salvando...", "");
+      await apiPutById(id, dados);
+      setPill("pillSave", "Salvamento: ok", "ok");
+    } catch (e) {
+      setPill("pillSave", `Salvamento: erro (${e.message || "falha"})`, "err");
+    }
+  }
+
+  function salvarDebounce() {
+    if (RELATORIO_FINALIZADO) return;
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => salvarAgora(), 700);
+  }
+
+  function adicionarLinha() {
+    if (RELATORIO_FINALIZADO) {
+      alert("Este relatório está finalizado e não permite alterações.");
+      return;
+    }
+    criarLinha(null);
+    salvarDebounce();
+  }
+
+  function removerLinhaEspecifica(btn) {
+    if (RELATORIO_FINALIZADO) {
+      alert("Este relatório está finalizado e não permite alterações.");
+      return;
+    }
+
+    const tbody = document.getElementById("tbody-atividades");
+    const linhas = tbody.querySelectorAll(".linha-atividade");
+
+    if (linhas.length <= 1) {
+      alert("Não pode remover todas as linhas.");
+      return;
+    }
+
+    btn.closest("tr").remove();
+    salvarDebounce();
+  }
+
+  async function limparFormulario() {
+    if (RELATORIO_FINALIZADO) {
+      alert("Este relatório está finalizado e não permite alterações.");
+      return;
+    }
+
+    if (!confirm("Deseja limpar apenas os campos deste relatório (sem alterar o ID)?")) return;
+
+    _loading = true;
+
+    try {
+      if (RELATORIO_ID) setPill("pillId", `ID: ${RELATORIO_ID}`, "ok");
+      else setPill("pillId", "ID: -", "");
+
+      setPill("pillLoad", "Carregamento: ok", "ok");
+      setPill("pillSave", "Salvamento: limpando...", "");
+
+      document.getElementById("setor").value = "";
+      document.getElementById("supervisor").value = "";
+      document.getElementById("projeto").value = "";
+      document.getElementById("local").value = "";
+      document.getElementById("resumo_semana").value = "";
+      document.getElementById("observacoes").value = "";
+
+      limparTabela();
+
+      const q = parseQuery();
+      const semanaInicio = (document.getElementById("semana_inicio").value || "").trim();
+      const dataRef = (q.ref && String(q.ref).trim()) ? String(q.ref).slice(0, 10) : semanaInicio;
+
+      if (dataRef && isValidIsoDate(dataRef)) {
+        criarLinha({ data: `${dataRef}T00:00:00`, periodo: "", atividade: "", horas: null, status: "" });
+      } else {
+        criarLinha(null);
+      }
+
+      if (RELATORIO_ID) {
+        await apiPutById(RELATORIO_ID, montarDadosParaSalvar());
+        setPill("pillSave", "Salvamento: ok", "ok");
+      } else {
+        setPill("pillSave", "Salvamento: aguardando criar...", "");
+      }
+
+      warmupSugestoes();
+    } catch (e) {
+      setPill("pillSave", `Salvamento: erro (${e.message || "falha"})`, "err");
+    } finally {
+      _loading = false;
+    }
+  }
+
+  function exportarPDF() {
+    window.print();
+  }
+
+  function limitarHoras(campo) {
+    if (RELATORIO_FINALIZADO) return;
+
+    let valor = parseFloat(campo.value);
+    if (isNaN(valor)) return;
+
+    if (valor > 8) campo.value = 8;
+    if (valor < 0) campo.value = 0;
+
+    salvarDebounce();
+  }
+
+  async function finalizarRelatorioFlow() {
+    if (RELATORIO_FINALIZADO) return;
+
+    const ok = confirm(
+      "Tem certeza que deseja finalizar o relatório?\n\n" +
+      "Após finalizar, nenhuma alteração será permitida."
+    );
+    if (!ok) return;
+
+    _loading = true;
+
+    try {
+      const id = await garantirIdSeNaoTiver();
+
+      RELATORIO_FINALIZADO = true;
+
+      setPill("pillSave", "Salvamento: finalizando...", "");
+      await apiPutById(id, montarDadosParaSalvar());
+
+      setPill("pillSave", "Salvamento: ok", "ok");
+      applyFinalizadoUI();
+
+      notifySidebarRefresh();
+    } catch (e) {
+      RELATORIO_FINALIZADO = false;
+      setPill("pillSave", `Salvamento: erro (${e.message || "falha"})`, "err");
+      applyFinalizadoUI();
+      alert("Falha ao finalizar. Verifique o backend e tente novamente.");
+    } finally {
+      _loading = false;
+    }
+  }
+
+  function warmupSugestoes() {
+    const colab = getColaboradorAtual();
+    if (!colab) return;
+
+    debounceSug("setor", async () => {
+      try { setDatalist("dl_setor", (await apiSugestoes("setor", null)).itens); } catch {}
+    }, 50);
+
+    debounceSug("supervisor", async () => {
+      try { setDatalist("dl_supervisor", (await apiSugestoes("supervisor", null)).itens); } catch {}
+    }, 70);
+
+    debounceSug("projeto", async () => {
+      try { setDatalist("dl_projeto", (await apiSugestoes("projeto", null)).itens); } catch {}
+    }, 90);
+
+    debounceSug("local", async () => {
+      try { setDatalist("dl_local", (await apiSugestoes("local", null)).itens); } catch {}
+    }, 110);
+  }
+
+  // =========================
+  // PRINT (PDF) - HEADER + FOOTER
+  // =========================
+
+  function ensurePrintHeaderFooterNodes() {
+    const container = document.querySelector(".container");
+    if (!container) return;
+
+    // ✅ HEADER (faixa preta)
+    if (!document.getElementById("print_header")) {
+      const header = document.createElement("div");
+      header.id = "print_header";
+      header.innerHTML = `
+        <div class="ph-left">
+          <div class="ph-brand">
+            <img class="ph-logo" src="logo_branco.png" alt="Controltech" />
+            <div class="ph-left-text">
+              <div class="ph-company">CONTROLTECH AUTOMAÇÃO</div>
+              <div class="ph-title">Controle Semanal de Atividades</div>
+            </div>
+          </div>
+        </div>
+        <div class="ph-right" id="pf_emitted">Emitido em: -</div>
+      `;
+      container.insertBefore(header, container.firstChild);
+    }
+
+    // ✅ FOOTER: se existir de execuções antigas, remove
+    const oldFooter = document.getElementById("print_footer");
+    if (oldFooter) oldFooter.remove();
+  }
+
+  function ensurePrintSectionTitles() {
+    const ids = ["print_sec_info", "print_sec_ativ", "print_sec_obs"];
+    ids.forEach((id) => {
+      const n = document.getElementById(id);
+      if (n) n.remove();
+    });
+
+    const info = document.getElementById("wrap_info");
+    if (info) {
+      const t = document.createElement("div");
+      t.id = "print_sec_info";
+      t.className = "print-section-title";
+      t.textContent = "Informações da semana";
+      info.parentNode.insertBefore(t, info);
+    }
+
+    const tabela = document.getElementById("tabela-atividades");
+    if (tabela) {
+      const t = document.createElement("div");
+      t.id = "print_sec_ativ";
+      t.className = "print-section-title";
+      t.textContent = "Atividades";
+      tabela.parentNode.insertBefore(t, tabela);
+    }
+
+    const obs = document.getElementById("wrap_observacoes");
+    if (obs) {
+      const t = document.createElement("div");
+      t.id = "print_sec_obs";
+      t.className = "print-section-title";
+      t.textContent = "Observações e pendências";
+      obs.parentNode.insertBefore(t, obs);
+    }
+  }
+
+  function clearPrintSectionTitles() {
+    ["print_sec_info", "print_sec_ativ", "print_sec_obs"].forEach((id) => {
+      const n = document.getElementById(id);
+      if (n) n.remove();
+    });
+  }
+
+  function setPrintHeaderFooterValues() {
+    ensurePrintHeaderFooterNodes();
+
+    const emittedEl = document.getElementById("pf_emitted");
+    if (emittedEl) {
+      const emitted = new Date().toLocaleString("pt-BR");
+      emittedEl.textContent = `Emitido em: ${emitted}`;
+    }
+  }
+
+  // ✅ listeners FORA das funções
+  window.addEventListener("beforeprint", () => {
+    setPrintHeaderFooterValues();
+    ensurePrintSectionTitles();
+
+    updatePrintVisibility();
+    prepareBlankSelectTextForPrint();
+    preparePrintTextBlocks();
+  });
+
+  window.addEventListener("afterprint", () => {
+    clearPrintHidden();
+    restorePrintTweaks();
+    restorePrintTextBlocks();
+    clearPrintSectionTitles();
+  });
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    ensurePrintHeaderFooterNodes(); // ✅ cria agora e deixa o logo carregar antes do print
+    setupAutocomplete();
+    hardenAgainstChromeAutofill();
+
+    const q = parseQuery();
+    if (q.title && q.title.trim()) document.title = q.title.trim();
+
+    const monday = getMonday();
+    const semanaInicioEl = document.getElementById("semana_inicio");
+    const semanaFimEl = document.getElementById("semana_fim");
+
+    if (!semanaInicioEl.value) semanaInicioEl.value = isoDateOnly(monday);
+    if (!semanaFimEl.value) semanaFimEl.value = isoDateOnly(new Date(monday.getTime() + 6 * 86400000));
+
+    limparTabela();
+
+    if (q.ref && String(q.ref).trim()) {
+      criarLinha({ data: `${String(q.ref).slice(0,10)}T00:00:00`, periodo: "", atividade: "", horas: null, status: "" });
+    } else {
+      criarLinha(null);
+    }
+
+    const container = document.querySelector(".container");
+    container.addEventListener("input", () => {
+      if (_loading) return;
+      if (RELATORIO_FINALIZADO) return;
+      salvarDebounce();
+    });
+    container.addEventListener("change", () => {
+      if (_loading) return;
+      if (RELATORIO_FINALIZADO) return;
+      salvarDebounce();
+    });
+
+    semanaInicioEl.addEventListener("change", () => {
+      if (RELATORIO_FINALIZADO) return;
+      setSemanaFimFromInicio();
+      salvarDebounce();
+    });
+
+    const chk = document.getElementById("finalizado_chk");
+    chk.addEventListener("change", async () => {
+      if (RELATORIO_FINALIZADO) return;
+
+      if (chk.checked) {
+        await finalizarRelatorioFlow();
+      } else {
+        chk.checked = true;
+      }
+    });
+
+    if (q.id) {
+      RELATORIO_ID = q.id;
+      setPill("pillId", `ID: ${RELATORIO_ID}`, "ok");
+      await carregarPorId(RELATORIO_ID);
+    } else {
+      setPill("pillId", "ID: -", "");
+      setPill("pillLoad", "Carregamento: -", "");
+      setPill("pillSave", "Salvamento: aguardando criar...", "");
+      RELATORIO_FINALIZADO = false;
+      applyFinalizadoUI();
+
+      warmupSugestoes();
+    }
+  });
+</script>
+
+</body>
+</html>
